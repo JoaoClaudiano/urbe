@@ -32,7 +32,7 @@ BBOX = {
 
 # ─── Utility functions ──────────────────────────────────────────────────────────
 
-def load_csv(filepath: str) -> list[dict]:
+def load_csv(filepath: str) -> list[dict[str, str]]:
     """Load a CSV file using pandas if available, otherwise stdlib csv."""
     if pd is not None:
         df = pd.read_csv(filepath)
@@ -83,25 +83,26 @@ def generate_hex_centers(
 
 def assign_density_to_hex(
     center: tuple[float, float],
-    regions: list[dict],
+    regions: list[dict[str, float | str]],
     default_density: float = 3000,
 ) -> tuple[float, str]:
     """
     Assign density to a hex center by finding the nearest region centroid.
-    Returns (density, region_name).
+    Uses squared distance to avoid sqrt for comparisons. Returns (density, region_name).
     """
-    best_dist = float("inf")
+    best_dist_sq = float("inf")
     best_region = None
 
     for region in regions:
-        dlng = center[0] - region["centroid_lng"]
-        dlat = center[1] - region["centroid_lat"]
-        dist = math.sqrt(dlng ** 2 + dlat ** 2)
-        if dist < best_dist:
-            best_dist = dist
+        dlng = center[0] - float(region["centroid_lng"])
+        dlat = center[1] - float(region["centroid_lat"])
+        dist_sq = dlng ** 2 + dlat ** 2
+        if dist_sq < best_dist_sq:
+            best_dist_sq = dist_sq
             best_region = region
 
-    if best_region is None or best_dist > 0.05:
+    # 0.05 degrees threshold (squared: 0.0025)
+    if best_region is None or best_dist_sq > 0.0025:
         return default_density, "Outro"
 
     return best_region["density"], best_region["name"]
@@ -109,7 +110,7 @@ def assign_density_to_hex(
 
 # ─── Main processing logic ──────────────────────────────────────────────────────
 
-def process_region_data(raw_data: list[dict]) -> list[dict]:
+def process_region_data(raw_data: list[dict[str, str | float]]) -> list[dict[str, object]]:
     """Transform raw CSV rows into enriched region objects."""
     processed = []
     for row in raw_data:

@@ -9,6 +9,18 @@ mapboxgl.accessToken =
   import.meta.env.VITE_MAPBOX_TOKEN ||
   "pk.eyJ1IjoiZGVtb3VzZXIiLCJhIjoiY2xleGFtcGxlMDAwMDAwIn0.example";
 
+// Average ~8 residents per unit density when full region data is unavailable
+const DENSITY_TO_POPULATION_FACTOR = 8;
+
+// Age distribution coefficients (fraction of total population per group per gender)
+const AGE_COEFFICIENTS = {
+  "0-14":  { male: 0.70, female: 0.68 },
+  "15-29": { male: 0.90, female: 0.95 },
+  "30-44": { male: 1.10, female: 1.15 },
+  "45-59": { male: 0.75, female: 0.80 },
+  "60+":   { male: 0.45, female: 0.55 },
+} as const;
+
 function createHexagonCoordinates(
   centerLng: number,
   centerLat: number,
@@ -61,23 +73,26 @@ export default function HexMap() {
           setSelectedRegion({
             name: hexInfo.name,
             density: hexInfo.density,
-            population: hexInfo.density * 8,
+            population: hexInfo.density * DENSITY_TO_POPULATION_FACTOR,
             area: 1.5,
             growthRate: 1.2,
             populationHistory: [
               { year: 2000, population: Math.round(hexInfo.density * 6.5) },
-              { year: 2005, population: Math.round(hexInfo.density * 7) },
+              { year: 2005, population: Math.round(hexInfo.density * 7.0) },
               { year: 2010, population: Math.round(hexInfo.density * 7.3) },
               { year: 2015, population: Math.round(hexInfo.density * 7.7) },
-              { year: 2020, population: Math.round(hexInfo.density * 8) },
+              { year: 2020, population: Math.round(hexInfo.density * DENSITY_TO_POPULATION_FACTOR) },
             ],
-            ageGroups: [
-              { age: "0-14", male: Math.round(hexInfo.density * 0.7), female: Math.round(hexInfo.density * 0.68) },
-              { age: "15-29", male: Math.round(hexInfo.density * 0.9), female: Math.round(hexInfo.density * 0.95) },
-              { age: "30-44", male: Math.round(hexInfo.density * 1.1), female: Math.round(hexInfo.density * 1.15) },
-              { age: "45-59", male: Math.round(hexInfo.density * 0.75), female: Math.round(hexInfo.density * 0.8) },
-              { age: "60+", male: Math.round(hexInfo.density * 0.45), female: Math.round(hexInfo.density * 0.55) },
-            ],
+            ageGroups: (
+              Object.entries(AGE_COEFFICIENTS) as [
+                keyof typeof AGE_COEFFICIENTS,
+                { male: number; female: number },
+              ][]
+            ).map(([age, coef]) => ({
+              age,
+              male: Math.round(hexInfo.density * coef.male),
+              female: Math.round(hexInfo.density * coef.female),
+            })),
           });
         }
       }
