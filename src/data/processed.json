@@ -1,0 +1,109 @@
+{
+  "regions": [
+    {
+      "name": "Centro",
+      "density": 12000,
+      "population": 72000,
+      "area": 6.0,
+      "growthRate": 0.8,
+      "populationHistory": [
+        {"year": 2000, "population": 61000},
+        {"year": 2005, "population": 64000},
+        {"year": 2010, "population": 67000},
+        {"year": 2015, "population": 70000},
+        {"year": 2020, "population": 72000}
+      ],
+      "ageGroups": [
+        {"age": "0-14", "male": 6200, "female": 6000},
+        {"age": "15-29", "male": 8000, "female": 8500},
+        {"age": "30-44", "male": 9500, "female": 10000},
+        {"age": "45-59", "male": 7000, "female": 7500},
+        {"age": "60+", "male": 4200, "female": 5100}
+      ]
+    },
+    {
+      "name": "Aldeota",
+      "density": 9500,
+      "population": 95000,
+      "area": 10.0,
+      "growthRate": 1.2,
+      "populationHistory": [
+        {"year": 2000, "population": 78000},
+        {"year": 2005, "population": 82000},
+        {"year": 2010, "population": 87000},
+        {"year": 2015, "population": 91000},
+        {"year": 2020, "population": 95000}
+      ],
+      "ageGroups": [
+        {"age": "0-14", "male": 8000, "female": 7800},
+        {"age": "15-29", "male": 11000, "female": 11500},
+        {"age": "30-44", "male": 13500, "female": 14000},
+        {"age": "45-59", "male": 10000, "female": 10500},
+        {"age": "60+", "male": 5500, "female": 6200}
+      ]
+    },
+    {
+      "name": "Barra do Ceará",
+      "density": 7200,
+      "population": 108000,
+      "area": 15.0,
+      "growthRate": 2.1,
+      "populationHistory": [
+        {"year": 2000, "population": 85000},
+        {"year": 2005, "population": 90000},
+        {"year": 2010, "population": 96000},
+        {"year": 2015, "population": 102000},
+        {"year": 2020, "population": 108000}
+      ],
+      "ageGroups": [
+        {"age": "0-14", "male": 12000, "female": 11500},
+        {"age": "15-29", "male": 15000, "female": 14800},
+        {"age": "30-44", "male": 16000, "female": 15500},
+        {"age": "45-59", "male": 10500, "female": 11000},
+        {"age": "60+", "male": 5800, "female": 6900}
+      ]
+    },
+    {
+      "name": "Messejana",
+      "density": 5800,
+      "population": 87000,
+      "area": 15.0,
+      "growthRate": 1.8,
+      "populationHistory": [
+        {"year": 2000, "population": 68000},
+        {"year": 2005, "population": 73000},
+        {"year": 2010, "population": 78000},
+        {"year": 2015, "population": 83000},
+        {"year": 2020, "population": 87000}
+      ],
+      "ageGroups": [
+        {"age": "0-14", "male": 9500, "female": 9200},
+        {"age": "15-29", "male": 12000, "female": 11800},
+        {"age": "30-44", "male": 13000, "female": 12500},
+        {"age": "45-59", "male": 8500, "female": 8800},
+        {"age": "60+", "male": 4200, "female": 5000}
+      ]
+    },
+    {
+      "name": "Maraponga",
+      "density": 8100,
+      "population": 64800,
+      "area": 8.0,
+      "growthRate": 1.5,
+      "populationHistory": [
+        {"year": 2000, "population": 52000},
+        {"year": 2005, "population": 55000},
+        {"year": 2010, "population": 58500},
+        {"year": 2015, "population": 61500},
+        {"year": 2020, "population": 64800}
+      ],
+      "ageGroups": [
+        {"age": "0-14", "male": 7200, "female": 7000},
+        {"age": "15-29", "male": 9000, "female": 9200},
+        {"age": "30-44", "male": 10000, "female": 10500},
+        {"age": "45-59", "male": 6500, "female": 7000},
+        {"age": "60+", "male": 3200, "female": 4200}
+      ]
+    }
+  ]
+}
