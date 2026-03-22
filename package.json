@@ -8,9 +8,17 @@
     "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
-    "mapbox-gl": "^2.15.0",
+    "@deck.gl/layers": "^9.2.11",
+    "@deck.gl/react": "^9.2.11",
+    "@types/recharts": "^1.8.29",
+    "@vitejs/plugin-react": "^4.7.0",
+    "deck.gl": "^9.2.11",
+    "maplibre-gl": "^5.21.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-is": "^19.2.4",
+    "react-map-gl": "^8.1.0",
+    "recharts": "^3.8.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",

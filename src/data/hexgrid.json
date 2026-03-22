@@ -1,0 +1,28 @@
+{
+  "hexagons": [
+    {"id": "hex-0", "center": [-38.555, -3.715], "density": 11500, "name": "Centro Norte"},
+    {"id": "hex-1", "center": [-38.540, -3.720], "density": 12000, "name": "Centro"},
+    {"id": "hex-2", "center": [-38.525, -3.725], "density": 10200, "name": "Centro Leste"},
+    {"id": "hex-3", "center": [-38.510, -3.730], "density": 9500, "name": "Aldeota Norte"},
+    {"id": "hex-4", "center": [-38.495, -3.735], "density": 9200, "name": "Aldeota"},
+    {"id": "hex-5", "center": [-38.555, -3.730], "density": 10800, "name": "Centro Sul"},
+    {"id": "hex-6", "center": [-38.540, -3.735], "density": 9800, "name": "Centro Sul"},
+    {"id": "hex-7", "center": [-38.525, -3.740], "density": 8900, "name": "Aldeota Sul"},
+    {"id": "hex-8", "center": [-38.510, -3.745], "density": 8200, "name": "Aldeota Sul"},
+    {"id": "hex-9", "center": [-38.495, -3.750], "density": 7800, "name": "Meireles"},
+    {"id": "hex-10", "center": [-38.570, -3.755], "density": 7200, "name": "Parangaba"},
+    {"id": "hex-11", "center": [-38.555, -3.760], "density": 7600, "name": "Parangaba"},
+    {"id": "hex-12", "center": [-38.540, -3.765], "density": 6900, "name": "Jóquei Clube"},
+    {"id": "hex-13", "center": [-38.525, -3.770], "density": 6500, "name": "Jóquei Clube"},
+    {"id": "hex-14", "center": [-38.570, -3.775], "density": 8100, "name": "Maraponga Norte"},
+    {"id": "hex-15", "center": [-38.555, -3.780], "density": 8300, "name": "Maraponga"},
+    {"id": "hex-16", "center": [-38.540, -3.785], "density": 7400, "name": "Maraponga Sul"},
+    {"id": "hex-17", "center": [-38.585, -3.700], "density": 6800, "name": "Barra do Ceará"},
+    {"id": "hex-18", "center": [-38.580, -3.715], "density": 7200, "name": "Barra do Ceará"},
+    {"id": "hex-19", "center": [-38.575, -3.730], "density": 7500, "name": "Barra do Ceará Sul"},
+    {"id": "hex-20", "center": [-38.595, -3.810], "density": 8500, "name": "Mondubim Norte"},
+    {"id": "hex-21", "center": [-38.580, -3.820], "density": 8800, "name": "Mondubim"},
+    {"id": "hex-22", "center": [-38.505, -3.805], "density": 5800, "name": "Messejana Norte"},
+    {"id": "hex-23", "center": [-38.495, -3.820], "density": 5500, "name": "Messejana"}
+  ]
+}
