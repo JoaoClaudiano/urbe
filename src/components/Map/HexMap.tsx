@@ -5,9 +5,13 @@ import processedData from "../../data/processed.json";
 import { useRegion } from "../../context/RegionContext";
 import type { RegionData } from "../../context/RegionContext";
 
-mapboxgl.accessToken =
-  import.meta.env.VITE_MAPBOX_TOKEN ||
-  "pk.eyJ1IjoiZGVtb3VzZXIiLCJhIjoiY2xleGFtcGxlMDAwMDAwIn0.example";
+const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
+if (!mapboxToken) {
+  console.warn(
+    "[URBE] VITE_MAPBOX_TOKEN is not set. Set it in a .env file to enable the map."
+  );
+}
+mapboxgl.accessToken = mapboxToken ?? "";
 
 // Average ~8 residents per unit density when full region data is unavailable
 const DENSITY_TO_POPULATION_FACTOR = 8;

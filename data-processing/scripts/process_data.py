@@ -32,7 +32,7 @@ BBOX = {
 
 # ─── Utility functions ──────────────────────────────────────────────────────────
 
-def load_csv(filepath: str) -> list[dict[str, str]]:
+def load_csv(filepath: str) -> "list[dict[str, str | float]]":
     """Load a CSV file using pandas if available, otherwise stdlib csv."""
     if pd is not None:
         df = pd.read_csv(filepath)
@@ -110,7 +110,7 @@ def assign_density_to_hex(
 
 # ─── Main processing logic ──────────────────────────────────────────────────────
 
-def process_region_data(raw_data: list[dict[str, str | float]]) -> list[dict[str, object]]:
+def process_region_data(raw_data: "list[dict[str, str | float]]") -> "list[dict[str, object]]":
     """Transform raw CSV rows into enriched region objects."""
     processed = []
     for row in raw_data:
