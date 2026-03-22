@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Centro",
+        "density": 12000
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-38.55, -3.72],
+          [-38.53, -3.72],
+          [-38.53, -3.74],
+          [-38.55, -3.74],
+          [-38.55, -3.72]
+        ]]
+      }
+    }
+  ]
+}
