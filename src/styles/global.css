@@ -17,3 +17,28 @@ body {
   display: flex;
   flex-direction: row;
 }
+
+/* ── Mobile layout ── */
+@media (max-width: 640px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    width: 100% !important;
+    min-width: unset !important;
+    height: 100dvh;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.sidebar--hidden {
+    transform: translateX(-100%);
+  }
+
+  .sidebar-toggle {
+    display: flex !important;
+  }
+}

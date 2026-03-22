@@ -10,11 +10,17 @@ const LEGEND_STEPS = [
   { color: "#ff6b6b", label: "> 12.000" },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const { selectedRegion } = useRegion();
 
   return (
     <aside
+      className={`sidebar${open ? "" : " sidebar--hidden"}`}
       style={{
         width: "320px",
         minWidth: "320px",
@@ -29,20 +35,40 @@ export default function Sidebar() {
         zIndex: 10,
       }}
     >
-      <div>
-        <h1
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h1
+            style={{
+              fontSize: "22px",
+              color: "#e94560",
+              fontWeight: "bold",
+              letterSpacing: "2px",
+            }}
+          >
+            URBE
+          </h1>
+          <p style={{ fontSize: "12px", color: "#888", marginTop: "2px" }}>
+            Região Metropolitana de Fortaleza
+          </p>
+        </div>
+        {/* Close button — only visible on mobile via CSS */}
+        <button
+          className="sidebar-toggle"
+          onClick={onClose}
           style={{
-            fontSize: "22px",
-            color: "#e94560",
-            fontWeight: "bold",
-            letterSpacing: "2px",
+            display: "none",
+            background: "transparent",
+            border: "none",
+            color: "#888",
+            cursor: "pointer",
+            fontSize: "20px",
+            lineHeight: 1,
+            padding: "4px",
           }}
+          aria-label="Fechar menu"
         >
-          URBE
-        </h1>
-        <p style={{ fontSize: "12px", color: "#888", marginTop: "2px" }}>
-          Região Metropolitana de Fortaleza
-        </p>
+          ✕
+        </button>
       </div>
 
       <div
