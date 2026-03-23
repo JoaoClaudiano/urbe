@@ -1,8 +1,6 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
-import DeckGL from "@deck.gl/react";
-import { PolygonLayer } from "@deck.gl/layers";
-import { Map } from "react-map-gl/maplibre";
-import type { PickingInfo } from "@deck.gl/core";
+import { useState, useCallback, useMemo } from "react";
+import { MapContainer, TileLayer, Polygon } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import hexgridData from "../../data/hexgrid.json";
 import processedData from "../../data/processed.json";
 import { useRegion } from "../../context/RegionContext";
@@ -26,25 +24,27 @@ const AGE_COEFFICIENTS = {
   "60+":   { male: 0.45, female: 0.55 },
 } as const;
 
-/** MapLibre free dark-style tile URL (no token required) */
-const MAP_STYLE =
-  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+/**
+ * CARTO Dark Matter raster tiles — OpenStreetMap-based dark theme.
+ * No API token required.
+ */
+const TILE_URL =
+  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' +
+  ' &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-/** deck.gl initial viewport centred on Fortaleza */
-const INITIAL_VIEW_STATE = {
-  longitude: -38.54,
-  latitude: -3.76,
-  zoom: 11,
-  pitch: 0,
-  bearing: 0,
-};
+/** Leaflet map centre and initial zoom for Fortaleza */
+const MAP_CENTER: [number, number] = [-3.76, -38.54];
+const MAP_ZOOM = 11;
 
 // ─── Hex geometry ─────────────────────────────────────────────────────────────
 
 /**
- * Generate 6 corner [lng, lat] pairs for a pointy-top hexagon.
+ * Generate 6 corner [lat, lng] pairs for a pointy-top hexagon.
  * Vertices are spaced 60° apart, starting at -30° so the top/bottom
  * edges are flat (pointy-top orientation).
+ * Note: Leaflet uses [lat, lng] ordering.
  */
 function hexCorners(
   centerLng: number,
@@ -54,11 +54,11 @@ function hexCorners(
 ): [number, number][] {
   return Array.from({ length: 6 }, (_, i) => {
     const angle = (Math.PI / 3) * i - Math.PI / 6;
-    return [centerLng + rLng * Math.cos(angle), centerLat + rLat * Math.sin(angle)];
+    return [centerLat + rLat * Math.sin(angle), centerLng + rLng * Math.cos(angle)];
   });
 }
 
-// ─── Density → RGBA colour ────────────────────────────────────────────────────
+// ─── Density → CSS hex colour ─────────────────────────────────────────────────
 
 /** Linearly interpolate between two [R,G,B] colours. */
 function lerpColour(
@@ -82,20 +82,25 @@ const COLOUR_STOPS: [number, [number, number, number]][] = [
   [12500, [255, 107, 107]],  // #ff6b6b
 ];
 
-function densityToRgba(density: number, alpha: number): [number, number, number, number] {
-  if (density <= COLOUR_STOPS[0][0]) return [...COLOUR_STOPS[0][1], alpha];
-  if (density >= COLOUR_STOPS[COLOUR_STOPS.length - 1][0])
-    return [...COLOUR_STOPS[COLOUR_STOPS.length - 1][1], alpha];
-
-  for (let i = 1; i < COLOUR_STOPS.length; i++) {
-    const [d0, c0] = COLOUR_STOPS[i - 1];
-    const [d1, c1] = COLOUR_STOPS[i];
-    if (density <= d1) {
-      const t = (density - d0) / (d1 - d0);
-      return [...lerpColour(c0, c1, t), alpha];
+function densityToHex(density: number): string {
+  let rgb: [number, number, number];
+  if (density <= COLOUR_STOPS[0][0]) {
+    rgb = COLOUR_STOPS[0][1];
+  } else if (density >= COLOUR_STOPS[COLOUR_STOPS.length - 1][0]) {
+    rgb = COLOUR_STOPS[COLOUR_STOPS.length - 1][1];
+  } else {
+    rgb = COLOUR_STOPS[COLOUR_STOPS.length - 1][1];
+    for (let i = 1; i < COLOUR_STOPS.length; i++) {
+      const [d0, c0] = COLOUR_STOPS[i - 1];
+      const [d1, c1] = COLOUR_STOPS[i];
+      if (density <= d1) {
+        const t = (density - d0) / (d1 - d0);
+        rgb = lerpColour(c0, c1, t);
+        break;
+      }
     }
   }
-  return [...COLOUR_STOPS[COLOUR_STOPS.length - 1][1], alpha];
+  return `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
 // ─── Hex data ─────────────────────────────────────────────────────────────────
@@ -104,8 +109,8 @@ interface HexFeature {
   id: string;
   name: string;
   density: number;
-  /** Closed ring of corner coordinates */
-  contour: [number, number][];
+  /** Corner coordinates in Leaflet [lat, lng] format */
+  positions: [number, number][];
 }
 
 function buildHexFeatures(): HexFeature[] {
@@ -113,7 +118,7 @@ function buildHexFeatures(): HexFeature[] {
     id: hex.id,
     name: hex.name,
     density: hex.density,
-    contour: hexCorners(hex.center[0], hex.center[1], 0.007, 0.005),
+    positions: hexCorners(hex.center[0], hex.center[1], 0.007, 0.005),
   }));
 }
 
@@ -146,46 +151,33 @@ function buildFallbackRegion(hex: (typeof hexgridData.hexagons)[number]): Region
   };
 }
 
-// ─── WebGL support check ──────────────────────────────────────────────────────
+// ─── Single hex polygon component ─────────────────────────────────────────────
 
-function detectWebGL(): boolean {
-  try {
-    const canvas = document.createElement("canvas");
-    return !!(
-      window.WebGLRenderingContext &&
-      (canvas.getContext("webgl2") || canvas.getContext("webgl"))
-    );
-  } catch {
-    return false;
-  }
-}
+function HexPolygon({
+  hex,
+  onSelect,
+}: {
+  hex: HexFeature;
+  onSelect: (hex: HexFeature) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const fillColor = densityToHex(hex.density);
 
-// ─── Shared fallback UI ───────────────────────────────────────────────────────
-
-export function MapFallback() {
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#0d0d1a",
-        color: "#ccc",
-        flexDirection: "column",
-        gap: "12px",
-        padding: "24px",
-        textAlign: "center",
+    <Polygon
+      positions={hex.positions}
+      pathOptions={{
+        fillColor,
+        fillOpacity: hovered ? 1.0 : 0.75,
+        color: "rgba(255,255,255,0.24)",
+        weight: 1,
       }}
-    >
-      <p style={{ fontSize: "1rem", margin: 0 }}>
-        Não foi possível renderizar o mapa.
-      </p>
-      <p style={{ fontSize: "0.85rem", color: "#666", margin: 0 }}>
-        Verifique se seu navegador suporta WebGL e tente novamente.
-      </p>
-    </div>
+      eventHandlers={{
+        click: () => onSelect(hex),
+        mouseover: () => setHovered(true),
+        mouseout: () => setHovered(false),
+      }}
+    />
   );
 }
 
@@ -193,94 +185,33 @@ export function MapFallback() {
 
 export default function HexMap() {
   const { setSelectedRegion } = useRegion();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  /** Becomes true if deck.gl reports an unrecoverable GPU/device error. */
-  const [deckError, setDeckError] = useState(false);
-  /**
-   * Deferred mount flag: wait one animation frame before rendering DeckGL so
-   * the canvas is fully sized before the ResizeObserver can fire.
-   */
-  const [mounted, setMounted] = useState(false);
-  /** Computed once on mount — avoids creating a canvas element on every render. */
-  const webglAvailable = useMemo(detectWebGL, []);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  // Pre-build hex features once (stable reference)
   const hexFeatures = useMemo(buildHexFeatures, []);
 
-  const handleClick = useCallback(
-    (info: PickingInfo<HexFeature>) => {
-      if (!info.object) return;
-      const regionName = info.object.name;
-      const regionData = processedData.regions.find((r) => r.name === regionName);
+  const handleSelect = useCallback(
+    (hex: HexFeature) => {
+      const regionData = processedData.regions.find((r) => r.name === hex.name);
       if (regionData) {
         setSelectedRegion(regionData as RegionData);
       } else {
-        const hexInfo = hexgridData.hexagons.find((h) => h.name === regionName);
+        const hexInfo = hexgridData.hexagons.find((h) => h.name === hex.name);
         if (hexInfo) setSelectedRegion(buildFallbackRegion(hexInfo));
       }
     },
     [setSelectedRegion]
   );
 
-  const handleHover = useCallback((info: PickingInfo<HexFeature>) => {
-    setHoveredId(info.object?.id ?? null);
-  }, []);
-
-  const layers = useMemo(
-    () => [
-      new PolygonLayer<HexFeature>({
-        id: "hexbin-layer",
-        data: hexFeatures,
-        pickable: true,
-        stroked: true,
-        filled: true,
-        // Polygon contour (closed ring)
-        getPolygon: (d) => d.contour,
-        // Density-interpolated fill; brighten hovered hex
-        getFillColor: (d) =>
-          densityToRgba(d.density, d.id === hoveredId ? 255 : 192),
-        getLineColor: [255, 255, 255, 60],
-        getLineWidth: 30,
-        lineWidthUnits: "meters",
-        // Smooth colour transitions when hover changes
-        updateTriggers: { getFillColor: hoveredId },
-        transitions: { getFillColor: 150 },
-        onClick: handleClick,
-        onHover: handleHover,
-      }),
-    ],
-    [hexFeatures, hoveredId, handleClick, handleHover]
-  );
-
-  if (!webglAvailable || deckError) {
-    return <MapFallback />;
-  }
-
-  if (!mounted) {
-    return (
-      <div style={{ width: "100%", height: "100%", background: "#0d0d1a" }} />
-    );
-  }
-
   return (
-    <DeckGL
-      initialViewState={INITIAL_VIEW_STATE}
-      controller
-      layers={layers}
-      style={{ position: "relative", width: "100%", height: "100%" }}
-      getCursor={({ isHovering }) => (isHovering ? "pointer" : "grab")}
-      onError={(error) => {
-        console.error("DeckGL error:", error);
-        setDeckError(true);
-      }}
+    <MapContainer
+      center={MAP_CENTER}
+      zoom={MAP_ZOOM}
+      style={{ width: "100%", height: "100%" }}
+      zoomControl
     >
-      {/* MapLibre GL base map — no token required */}
-      <Map mapStyle={MAP_STYLE} />
-    </DeckGL>
+      {/* CARTO Dark Matter — OpenStreetMap-based dark raster tiles, no token required */}
+      <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} maxZoom={19} />
+      {hexFeatures.map((hex) => (
+        <HexPolygon key={hex.id} hex={hex} onSelect={handleSelect} />
+      ))}
+    </MapContainer>
   );
 }
