@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import DeckGL from "@deck.gl/react";
 import { PolygonLayer } from "@deck.gl/layers";
 import { Map } from "react-map-gl/maplibre";
@@ -146,11 +146,68 @@ function buildFallbackRegion(hex: (typeof hexgridData.hexagons)[number]): Region
   };
 }
 
+// ─── WebGL support check ──────────────────────────────────────────────────────
+
+function detectWebGL(): boolean {
+  try {
+    const canvas = document.createElement("canvas");
+    return !!(
+      window.WebGLRenderingContext &&
+      (canvas.getContext("webgl2") || canvas.getContext("webgl"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+// ─── Shared fallback UI ───────────────────────────────────────────────────────
+
+export function MapFallback() {
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#0d0d1a",
+        color: "#ccc",
+        flexDirection: "column",
+        gap: "12px",
+        padding: "24px",
+        textAlign: "center",
+      }}
+    >
+      <p style={{ fontSize: "1rem", margin: 0 }}>
+        Não foi possível renderizar o mapa.
+      </p>
+      <p style={{ fontSize: "0.85rem", color: "#666", margin: 0 }}>
+        Verifique se seu navegador suporta WebGL e tente novamente.
+      </p>
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function HexMap() {
   const { setSelectedRegion } = useRegion();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  /** Becomes true if deck.gl reports an unrecoverable GPU/device error. */
+  const [deckError, setDeckError] = useState(false);
+  /**
+   * Deferred mount flag: wait one animation frame before rendering DeckGL so
+   * the canvas is fully sized before the ResizeObserver can fire.
+   */
+  const [mounted, setMounted] = useState(false);
+  /** Computed once on mount — avoids creating a canvas element on every render. */
+  const webglAvailable = useMemo(detectWebGL, []);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   // Pre-build hex features once (stable reference)
   const hexFeatures = useMemo(buildHexFeatures, []);
@@ -200,6 +257,16 @@ export default function HexMap() {
     [hexFeatures, hoveredId, handleClick, handleHover]
   );
 
+  if (!webglAvailable || deckError) {
+    return <MapFallback />;
+  }
+
+  if (!mounted) {
+    return (
+      <div style={{ width: "100%", height: "100%", background: "#0d0d1a" }} />
+    );
+  }
+
   return (
     <DeckGL
       initialViewState={INITIAL_VIEW_STATE}
@@ -207,6 +274,10 @@ export default function HexMap() {
       layers={layers}
       style={{ position: "relative", width: "100%", height: "100%" }}
       getCursor={({ isHovering }) => (isHovering ? "pointer" : "grab")}
+      onError={(error) => {
+        console.error("DeckGL error:", error);
+        setDeckError(true);
+      }}
     >
       {/* MapLibre GL base map — no token required */}
       <Map mapStyle={MAP_STYLE} />

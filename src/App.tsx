@@ -1,5 +1,6 @@
 import { useState } from "react";
 import HexMap from "./components/Map/HexMap";
+import WebGLErrorBoundary from "./components/Map/WebGLErrorBoundary";
 import Sidebar from "./components/Sidebar";
 import { RegionProvider } from "./context/RegionContext";
 
@@ -34,7 +35,9 @@ export default function App() {
           >
             ☰
           </button>
-          <HexMap />
+          <WebGLErrorBoundary>
+            <HexMap />
+          </WebGLErrorBoundary>
         </div>
       </div>
     </RegionProvider>
